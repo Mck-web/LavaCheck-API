@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LavaCheck - Pátio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .patio-container { max-width: 600px; margin: 40px auto; }
+        .veiculo-card { background: white; padding: 20px; border-radius: 8px; border: 2px solid #ffc107; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .header-card { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+        .placa { font-size: 1.25rem; font-weight: bold; margin: 0; }
+        .status-badge { background-color: #ffc107; color: #000; font-weight: bold; padding: 5px 10px; border-radius: 4px; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+
+<div class="container patio-container">
+    <h3 class="text-center mb-4 text-primary">Pátio Atual</h3>
+    <div class="text-center mb-4">
+        <a href="index.html" class="btn btn-outline-secondary btn-sm">Novo Check-in</a>
+    </div>
+    
+    <div id="listaPatio">
+        <!-- Cards injetados via JavaScript -->
+    </div>
+</div>
+
+<script>
+    async function carregarPatio() {
+        try {
+            const response = await fetch('http://localhost:8000/patio');
+            const veiculos = await response.json();
+            const lista = document.getElementById('listaPatio');
+            lista.innerHTML = '';
+
+            veiculos.forEach(v => {
+                lista.innerHTML += `
+                    <div class="veiculo-card">
+                        <div class="header-card">
+                            <h4 class="placa">${v.placa}</h4>
+                            <span class="status-badge">${v.status}</span>
+                        </div>
+                        <p class="mb-1 text-muted">Modelo: <strong>${v.modelo}</strong></p>
+                        <p class="mb-3 text-muted">Cliente: <strong>${v.cliente}</strong></p>
+                        <button class="btn btn-success w-100 font-weight-bold" onclick="darBaixa('${v.placa}')">
+                            <i class="bi bi-check2-circle"></i> Finalizar Serviço (Dar Baixa)
+                        </button>
+                    </div>
+                `;
+            });
+        } catch (error) {
+            console.error('Erro ao carregar o pátio', error);
+        }
+    }
+
+    async function darBaixa(placa) {
+        if (confirm(`Tem certeza que deseja baixar o veículo ${placa}? O cliente será notificado via WhatsApp.`)) {
+            try {
+                await fetch(`http://localhost:8000/checkout/${placa}`, { method: 'DELETE' });
+                carregarPatio();
+            } catch (error) {
+                alert('Erro ao dar baixa no veículo.');
+            }
+        }
+    }
+
+    // Carrega a lista assim que a página abre
+    window.onload = carregarPatio;
+</script>
+</body>
+</html>
